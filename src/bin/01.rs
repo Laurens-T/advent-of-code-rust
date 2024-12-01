@@ -9,12 +9,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     col1.sort();
     col2.sort();
 
-    let mut result = 0;
-    for (a, b) in zip(col1, col2) {
-        result += (a - b).abs();
-    }
-
-    Some(result)
+    Some(zip(col1, col2).map(|(l, r)| (l - r).abs()).sum())
 }
 
 fn parse_lines(input: &str) -> (Vec<i32>, Vec<i32>) {
@@ -38,12 +33,16 @@ pub fn part_two(input: &str) -> Option<i32> {
         counts.entry(v).and_modify(|c| *c += 1).or_insert(1);
     });
 
-    Some(col1.into_iter().fold(0, |acc, v| {
-        acc + v * match counts.get(&v) {
-            None => 0,
-            Some(&count) => count,
-        }
-    }))
+    Some(
+        col1.into_iter()
+            .map(|v| {
+                v * match counts.get(&v) {
+                    None => 0,
+                    Some(&count) => count,
+                }
+            })
+            .sum(),
+    )
 }
 
 #[cfg(test)]
