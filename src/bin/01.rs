@@ -38,16 +38,12 @@ pub fn part_two(input: &str) -> Option<i32> {
         counts.entry(v).and_modify(|c| *c += 1).or_insert(1);
     });
 
-    let mut result = 0;
-    for val in col1 {
-        result += val
-            * match counts.get(&val) {
-                None => 0,
-                Some(&count) => count,
-            };
-    }
-
-    Some(result)
+    Some(col1.into_iter().fold(0, |acc, v| {
+        acc + v * match counts.get(&v) {
+            None => 0,
+            Some(&count) => count,
+        }
+    }))
 }
 
 #[cfg(test)]
