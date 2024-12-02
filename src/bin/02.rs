@@ -33,7 +33,13 @@ fn is_safe(report: &Vec<i32>) -> bool {
         return false;
     }
 
-    zip(report, report.iter().skip(1)).all(|(a, b)| (1..=3).contains(&(a - b).abs()))
+    for (a, b) in zip(report, report.iter().skip(1)) {
+        if !(1..=3).contains(&(a - b).abs()) {
+            return false;
+        }
+    }
+
+    true
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
