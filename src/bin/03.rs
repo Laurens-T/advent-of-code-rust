@@ -57,7 +57,7 @@ impl Parser {
     }
 
     fn maybe_parse_disable(&mut self) -> Option<Instruction> {
-        for b in "n't(".chars() {
+        for b in ['n', '\'', 't', '(', ')'] {
             match self.curr_byte() {
                 Some(&c) if c == b => self.pos += 1,
                 Some(_) => return None,
@@ -71,7 +71,7 @@ impl Parser {
 
 impl Parser {
     fn maybe_parse_mul(&mut self) -> Option<Instruction> {
-        for b in "mul(".chars() {
+        for b in ['m', 'u', 'l', '('] {
             match self.curr_byte() {
                 Some(&c) if c == b => self.pos += 1,
                 Some(_) => return None,
@@ -85,7 +85,8 @@ impl Parser {
         };
 
         match self.curr_byte() {
-            Some(&c) => if c == ',' { self.pos += 1 },
+            Some(&c) if c == ',' => self.pos += 1,
+            Some(_) => return None,
             None => return None,
         }
 
@@ -95,7 +96,8 @@ impl Parser {
         };
 
         match self.curr_byte() {
-            Some(&c) => if c == ')' { self.pos += 1 },
+            Some(&c) if c == ')' => self.pos += 1,
+            Some(_) => return None,
             None => return None,
         }
 
