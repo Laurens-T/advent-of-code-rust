@@ -35,7 +35,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 nodes.into_iter().for_each(|pos| {
                     antinodes.insert(pos);
                 });
-                
+
                 antinodes.insert(*pos1);
                 antinodes.insert(*pos2);
             }
@@ -44,22 +44,22 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     // debug
     // let mut a = vec![vec!['.'; grid.n_cols as usize]; grid.n_rows as usize];
-    // 
+    //
     // grid.antennas.iter().for_each(|(c, positions)| {
     //     for x in positions {
     //         a[x.row as usize][x.col as usize] = *c;
     //     }
     // });
-    // 
+    //
     // antinodes.iter().for_each(|x| {
     //     a[x.row as usize][x.col as usize] = '#';
     // });
-    // 
+    //
     // let something: Vec<String> = a
     //     .iter()
     //     .map(|line| line.iter().collect::<String>())
     //     .collect();
-    // 
+    //
     // something.iter().for_each(|line| println!("{line}"));
 
     Some(antinodes.len() as u32)
@@ -89,70 +89,31 @@ impl Grid {
     }
 
     fn single_antinodes(&self, pos1: &Pos, pos2: &Pos) -> (Pos, Pos) {
-        let (pos1, pos2) = if pos1.col < pos2.col {
-            (pos1, pos2)
-        } else {
-            (pos2, pos1)
-        };
+        let delta_y = pos1.row - pos2.row;
+        let delta_x = pos1.col - pos2.col;
 
-        let delta_y = (pos1.row - pos2.row).abs();
-        let delta_x = (pos1.col - pos2.col).abs();
-
-        if pos1.row <= pos2.row {
-            // diagonal (2, 5) and (3, 7)
-            (
-                Pos::new(pos1.row - delta_y, pos1.col - delta_x),
-                Pos::new(pos2.row + delta_y, pos2.col + delta_x),
-            )
-        } else {
-            // anti-diagonal (2,5) and (1, 8)
-            (
-                Pos::new(pos1.row + delta_y, pos1.col - delta_x),
-                Pos::new(pos2.row - delta_y, pos2.col + delta_x),
-            )
-        }
+        (
+            Pos::new(pos1.row + delta_y, pos1.col + delta_x),
+            Pos::new(pos2.row - delta_y, pos2.col - delta_x),
+        )
     }
 
     fn resonant_antinodes(&self, pos1: &Pos, pos2: &Pos) -> Vec<Pos> {
-        let (pos1, pos2) = if pos1.col < pos2.col {
-            (pos1, pos2)
-        } else {
-            (pos2, pos1)
-        };
-
-        let delta_y = (pos1.row - pos2.row).abs();
-        let delta_x = (pos1.col - pos2.col).abs();
+        let delta_y = pos1.row - pos2.row;
+        let delta_x = pos1.col - pos2.col;
 
         let mut antinodes = Vec::new();
 
-        if pos1.row <= pos2.row {
-            // exercise for the reader: refactor this so that it uses fewer lines of code 
-            // go to top left
-            let mut pos = Pos::new(pos1.row - delta_y, pos1.col - delta_x);
-            while self.in_bounds(&pos) {
-                antinodes.push(pos);
-                pos = Pos::new(pos.row - delta_y, pos.col - delta_x);
-            }
+        let mut pos = Pos::new(pos1.row + delta_y, pos1.col + delta_x);
+        while self.in_bounds(&pos) {
+            antinodes.push(pos);
+            pos = Pos::new(pos.row + delta_y, pos.col + delta_x);
+        }
 
-            // go to bottom left
-            let mut pos = Pos::new(pos2.row + delta_y, pos2.col + delta_x);
-            while self.in_bounds(&pos) {
-                antinodes.push(pos);
-                pos = Pos::new(pos.row + delta_y, pos.col + delta_x);
-            }
-        } else {
-            // anti-diagonal (2,5) and (1, 8)
-            let mut pos = Pos::new(pos1.row + delta_y, pos1.col - delta_x);
-            while self.in_bounds(&pos) {
-                antinodes.push(pos);
-                pos = Pos::new(pos.row + delta_y, pos.col - delta_x);
-            }
-
-            let mut pos = Pos::new(pos2.row - delta_y, pos2.col + delta_x);
-            while self.in_bounds(&pos) {
-                antinodes.push(pos);
-                pos = Pos::new(pos.row - delta_y, pos.col + delta_x);
-            }
+        let mut pos = Pos::new(pos2.row - delta_y, pos2.col - delta_x);
+        while self.in_bounds(&pos) {
+            antinodes.push(pos);
+            pos = Pos::new(pos.row - delta_y, pos.col - delta_x);
         }
 
         antinodes
@@ -240,7 +201,7 @@ mod tests {
             n_rows: 12,
         }
         .single_antinodes(pos1, pos2);
-        let expected = (Pos::new(3, 2), Pos::new(0, 11));
+        let expected = (Pos::new(0, 11), Pos::new(3, 2));
 
         assert_eq!(expected, result);
     }
@@ -280,7 +241,7 @@ mod tests {
             n_rows: 12,
         }
         .single_antinodes(pos1, pos2);
-        let expected = (Pos::new(1, 3), Pos::new(4, 9));
+        let expected = (Pos::new(4, 9), Pos::new(1, 3));
 
         assert_eq!(expected, result);
     }
@@ -296,7 +257,7 @@ mod tests {
             n_rows: 12,
         }
         .single_antinodes(pos1, pos2);
-        let expected = (Pos::new(7, 5), Pos::new(1, 5));
+        let expected = (Pos::new(1, 5), Pos::new(7, 5));
 
         assert_eq!(expected, result);
     }
