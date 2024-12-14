@@ -1,10 +1,16 @@
 use std::collections::HashMap;
 use std::iter::zip;
 
+use nom::{
+    character::complete::{self, line_ending, space1},
+    multi::separated_list1,
+    sequence::separated_pair,
+};
+
 advent_of_code::solution!(1);
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let (mut col1, mut col2) = parse_lines(input);
+    let (mut col1, mut col2) = parse_input(input);
 
     col1.sort();
     col2.sort();
@@ -12,21 +18,8 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(zip(col1, col2).map(|(l, r)| (l - r).abs()).sum())
 }
 
-fn parse_lines(input: &str) -> (Vec<i32>, Vec<i32>) {
-    let ids: Vec<Vec<&str>> = input
-        .lines()
-        .filter(|line| !line.is_empty())
-        .map(|line| line.split("   ").collect())
-        .collect();
-
-    let col1: Vec<i32> = ids.iter().map(|s| s[0].parse::<i32>().unwrap()).collect();
-    let col2: Vec<i32> = ids.iter().map(|s| s[1].parse::<i32>().unwrap()).collect();
-
-    (col1, col2)
-}
-
 pub fn part_two(input: &str) -> Option<i32> {
-    let (col1, col2) = parse_lines(input);
+    let (col1, col2) = parse_input(input);
 
     let mut counts = HashMap::new();
     col2.into_iter().for_each(|v| {
@@ -43,6 +36,26 @@ pub fn part_two(input: &str) -> Option<i32> {
             })
             .sum(),
     )
+}
+
+fn parse_input(input: &str) -> (Vec<i32>, Vec<i32>) {
+    let (_, values) = separated_list1(
+        line_ending::<&str, ()>,
+        separated_pair(complete::i32, space1, complete::i32),
+    )(input)
+    .expect("");
+
+    let (mut first, mut second): (Vec<i32>, Vec<i32>) = (
+        Vec::with_capacity(values.len()),
+        Vec::with_capacity(values.len()),
+    );
+
+    for (l, r) in values {
+        first.push(l);
+        second.push(r);
+    }
+
+    (first, second)
 }
 
 #[cfg(test)]
