@@ -4,7 +4,7 @@ advent_of_code::solution!(12);
 
 type Position = (i32, i32);
 
-const OFFSETS: [Position; 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+const DIRECTIONS: [Position; 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
 pub fn part_one(input: &str) -> Option<u32> {
     let grid = parse_input(input);
@@ -15,9 +15,9 @@ pub fn part_one(input: &str) -> Option<u32> {
         .map(|(c, region)| {
             region.len() as u32
                 * region
-                .iter()
-                .map(|&pos| 4 - fence(&grid, pos, *c).len() as u32)
-                .sum::<u32>()
+                    .iter()
+                    .map(|&pos| 4 - fence(&grid, pos, *c).len() as u32)
+                    .sum::<u32>()
         })
         .sum();
 
@@ -41,7 +41,7 @@ fn get_regions(grid: &HashMap<Position, char>) -> Vec<(char, Vec<Position>)> {
         while let Some(pos) = positions.pop() {
             region.push(pos);
 
-            OFFSETS.iter().for_each(|&offset| {
+            DIRECTIONS.iter().for_each(|&offset| {
                 let new_pos = (pos.0 + offset.0, pos.1 + offset.1);
                 if visited.contains(&new_pos) {
                     return;
@@ -63,7 +63,7 @@ fn get_regions(grid: &HashMap<Position, char>) -> Vec<(char, Vec<Position>)> {
 }
 
 fn fence(grid: &HashMap<Position, char>, pos: Position, c: char) -> Vec<Position> {
-    OFFSETS
+    DIRECTIONS
         .into_iter()
         .map(|(y0, x0)| (pos.0 + y0, pos.1 + x0))
         .filter(|new_pos| grid.get(new_pos).is_some_and(|&c1| c == c1))
@@ -71,7 +71,52 @@ fn fence(grid: &HashMap<Position, char>, pos: Position, c: char) -> Vec<Position
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    None
+    let grid = parse_input(input);
+    let regions = get_regions(&grid);
+
+    let result: u32 = regions
+        .iter()
+        .map(|(c, region)| {
+            region.len() as u32
+                * region
+                    .iter()
+                    .map(|pos| corner_count(&grid, pos, c))
+                    .sum::<u32>()
+        })
+        .sum();
+
+    Some(result)
+}
+
+fn corner_count(grid: &HashMap<Position, char>, n: &Position, group_id: &char) -> u32 {
+    let directions = [
+        ((0, 1), (1, 0)),
+        ((1, 0), (0, -1)),
+        ((0, -1), (-1, 0)),
+        ((-1, 0), (0, 1)),
+    ];
+    let mut count = 0;
+    let get_at_offset = |(y, x): &(i32, i32)| grid.get(&(y + n.0, x + n.1));
+
+    for (a, b) in directions {
+        let test_a = get_at_offset(&a).is_some_and(|c| c == group_id);
+        let test_b = get_at_offset(&b).is_some_and(|c| c == group_id);
+
+        if !test_a && !test_b {
+            // exterior corner
+            // BB
+            // BA
+            count += 1;
+        } else if test_a && test_b {
+            //interior corner
+            // .A
+            // AA
+            if get_at_offset(&(a.0 + b.0, a.1 + b.1)).is_some_and(|c| c != group_id) {
+                count += 1;
+            }
+        }
+    }
+    count
 }
 
 fn parse_input(input: &str) -> HashMap<Position, char> {
@@ -99,7 +144,7 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(80));
     }
 
     #[test]
@@ -136,5 +181,24 @@ mod tests {
 
         let result = fence(&grid, (1, 0), 'B');
         assert_eq!(2, result.len());
+    }
+
+    #[test]
+    fn test_corner_count() {
+        // AAAA
+        // BBCD
+        // BBCC
+        // EEEC
+        let input = &advent_of_code::template::read_file("examples", DAY);
+        let grid = parse_input(input);
+
+        // assert_eq!(2, corner_count(&grid, &(0, 0), &'A'));
+        // assert_eq!(0, corner_count(&grid, &(0, 1), &'A'));
+        // assert_eq!(0, corner_count(&grid, &(0, 2), &'A'));
+        // assert_eq!(2, corner_count(&grid, &(0, 3), &'A'));
+        //
+        // assert_eq!(2, corner_count(&grid, &(1, 0), &'B'));
+
+        assert_eq!(4, corner_count(&grid, &(1, 3), &'D'));
     }
 }
