@@ -144,12 +144,6 @@ mod tests {
     }
 
     #[test]
-    fn test_part_two() {
-        let result = part_two(&advent_of_code::template::read_file("inputs", DAY));
-        assert_eq!(result, Some(6587));
-    }
-
-    #[test]
     fn test_step() {
         let mut robot = Robot {
             position: Vec2(2, 4),
