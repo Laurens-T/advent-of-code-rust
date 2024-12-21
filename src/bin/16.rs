@@ -1,0 +1,184 @@
+use std::cmp::Reverse;
+use std::collections::{BinaryHeap, HashMap};
+use std::ops::Add;
+advent_of_code::solution!(16);
+
+pub fn part_one(input: &str) -> Option<u32> {
+    let (grid, start, end) = parse_input(input);
+    Some(shortest_path(&grid, start, end))
+}
+
+fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> u32 {
+    #[derive(PartialEq, Eq, Ord, PartialOrd, Debug)]
+    struct State {
+        cost: u32,
+        pos: Vec2,
+        direction: Direction,
+    }
+
+    let mut pq: BinaryHeap<Reverse<State>> = BinaryHeap::from([Reverse(State {
+        cost: 0,
+        pos: start,
+        direction: Direction::East,
+    })]);
+
+    let mut cost: HashMap<(Vec2, Direction), u32> = HashMap::from([((start, Direction::East), 0)]);
+    let mut min_cost = u32::MAX;
+
+    while let Some(state) = pq.pop() {
+        let state = state.0;
+        if state.cost >= min_cost {
+            break;
+        }
+
+        if state.pos == end {
+            min_cost = min_cost.min(state.cost);
+            continue;
+        }
+
+        let new_states = [
+            State {
+                cost: state.cost + 1,
+                pos: state.pos + state.direction.as_vec2(),
+                direction: state.direction,
+            },
+            State {
+                cost: state.cost + 1000,
+                pos: state.pos,
+                direction: state.direction.clockwise(),
+            },
+            State {
+                cost: state.cost + 1000,
+                pos: state.pos,
+                direction: state.direction.counter_clockwise(),
+            },
+        ];
+
+        for new_state in new_states {
+            if let Some(tile) = grid.get(&new_state.pos) {
+                match tile {
+                    Tile::Wall => {}
+                    Tile::Open | Tile::End => {
+                        let key = (new_state.pos, new_state.direction);
+                        if cost.get(&key).is_none_or(|&c| new_state.cost < c) {
+                            cost.insert(key, new_state.cost);
+                            pq.push(Reverse(new_state));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    min_cost
+}
+
+pub fn part_two(input: &str) -> Option<u32> {
+    None
+}
+
+enum Tile {
+    Wall,
+    Open,
+    End,
+}
+
+#[derive(Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash, Debug)]
+enum Direction {
+    North,
+    East,
+    South,
+    West,
+}
+
+impl Direction {
+    fn clockwise(&self) -> Self {
+        match self {
+            Direction::North => Self::East,
+            Direction::East => Self::South,
+            Direction::South => Self::West,
+            Direction::West => Self::North,
+        }
+    }
+
+    fn counter_clockwise(&self) -> Self {
+        match self {
+            Direction::North => Self::West,
+            Direction::East => Self::North,
+            Direction::South => Self::East,
+            Direction::West => Self::South,
+        }
+    }
+
+    fn as_vec2(&self) -> Vec2 {
+        match self {
+            Direction::North => Vec2(-1, 0),
+            Direction::East => Vec2(0, 1),
+            Direction::South => Vec2(1, 0),
+            Direction::West => Vec2(0, -1),
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Ord, PartialOrd, Debug)]
+struct Vec2(i32, i32);
+
+impl Add for Vec2 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Vec2(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+fn parse_input(input: &str) -> (HashMap<Vec2, Tile>, Vec2, Vec2) {
+    let mut start: Option<Vec2> = None;
+    let mut end: Option<Vec2> = None;
+
+    let grid = input
+        .lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .enumerate()
+        .flat_map(|(y, line)| {
+            line.chars()
+                .enumerate()
+                .map(|(x, c)| {
+                    let pos = Vec2(y as i32, x as i32);
+                    match c {
+                        'S' => {
+                            start = Some(Vec2(y as i32, x as i32));
+                            (pos, Tile::Open)
+                        }
+                        'E' => {
+                            end = Some(Vec2(y as i32, x as i32));
+                            (pos, Tile::End)
+                        }
+                        '#' => (pos, Tile::Wall),
+                        '.' => (pos, Tile::Open),
+                        _ => panic!(""),
+                    }
+                })
+                .collect::<Vec<(Vec2, Tile)>>()
+        })
+        .collect();
+
+    (grid, start.unwrap(), end.unwrap())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part_one() {
+        let result = part_one(&advent_of_code::template::read_file("examples", DAY));
+        assert_eq!(result, Some(7036));
+    }
+
+    #[test]
+    fn test_part_two() {
+        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
+        assert_eq!(result, None);
+    }
+}
