@@ -26,7 +26,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 }
 
 fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> (Vec<Vec<Vec2>>, u32) {
-    #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
+    #[derive(PartialEq, Eq, Ord, PartialOrd, Clone)]
     struct State {
         cost: u32,
         pos: Vec2,
@@ -128,7 +128,7 @@ enum Tile {
     End,
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash, Debug)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
 enum Direction {
     North,
     East,
@@ -165,7 +165,7 @@ impl Direction {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Copy, Clone, Ord, PartialOrd, Debug)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Ord, PartialOrd)]
 struct Vec2(i32, i32);
 
 impl Add for Vec2 {
