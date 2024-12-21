@@ -1,38 +1,68 @@
-use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap};
+use std::cmp::{Ordering, Reverse};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::ops::Add;
 advent_of_code::solution!(16);
 
 pub fn part_one(input: &str) -> Option<u32> {
     let (grid, start, end) = parse_input(input);
-    Some(shortest_path(&grid, start, end))
+    let (_, cost) = shortest_path(&grid, start, end);
+
+    Some(cost)
 }
 
-fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> u32 {
-    #[derive(PartialEq, Eq, Ord, PartialOrd, Debug)]
+pub fn part_two(input: &str) -> Option<u32> {
+    let (grid, start, end) = parse_input(input);
+    let (shortest_paths, _) = shortest_path(&grid, start, end);
+
+    let mut result = HashSet::new();
+
+    shortest_paths.iter().for_each(|path| {
+        for pos in path {
+            result.insert(pos);
+        }
+    });
+
+    Some(result.len() as u32)
+}
+
+fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> (Vec<Vec<Vec2>>, u32) {
+    #[derive(PartialEq, Eq, Ord, PartialOrd, Debug, Clone)]
     struct State {
         cost: u32,
         pos: Vec2,
         direction: Direction,
+        prev: Option<Box<State>>,
     }
 
     let mut pq: BinaryHeap<Reverse<State>> = BinaryHeap::from([Reverse(State {
         cost: 0,
         pos: start,
         direction: Direction::East,
+        prev: None,
     })]);
 
     let mut cost: HashMap<(Vec2, Direction), u32> = HashMap::from([((start, Direction::East), 0)]);
     let mut min_cost = u32::MAX;
+    let mut shortest_paths: Vec<State> = Vec::new();
 
     while let Some(state) = pq.pop() {
         let state = state.0;
-        if state.cost >= min_cost {
+        if state.cost > min_cost {
             break;
         }
 
         if state.pos == end {
-            min_cost = min_cost.min(state.cost);
+            let cost = state.cost;
+            match cost.cmp(&min_cost) {
+                Ordering::Equal => shortest_paths.push(state),
+                Ordering::Less => {
+                    shortest_paths.clear();
+                    shortest_paths.push(state);
+                }
+                Ordering::Greater => {}
+            }
+
+            min_cost = min_cost.min(cost);
             continue;
         }
 
@@ -41,16 +71,19 @@ fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> u32 {
                 cost: state.cost + 1,
                 pos: state.pos + state.direction.as_vec2(),
                 direction: state.direction,
+                prev: Some(Box::new(state.clone())),
             },
             State {
                 cost: state.cost + 1000,
                 pos: state.pos,
                 direction: state.direction.clockwise(),
+                prev: Some(Box::new(state.clone())),
             },
             State {
                 cost: state.cost + 1000,
                 pos: state.pos,
                 direction: state.direction.counter_clockwise(),
+                prev: Some(Box::new(state.clone())),
             },
         ];
 
@@ -60,7 +93,9 @@ fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> u32 {
                     Tile::Wall => {}
                     Tile::Open | Tile::End => {
                         let key = (new_state.pos, new_state.direction);
-                        if cost.get(&key).is_none_or(|&c| new_state.cost < c) {
+                        // <= is necessary for part 2, but this is not efficient since lots of
+                        // duplicate stuff gets calculated.
+                        if cost.get(&key).is_none_or(|&c| new_state.cost <= c) {
                             cost.insert(key, new_state.cost);
                             pq.push(Reverse(new_state));
                         }
@@ -70,12 +105,22 @@ fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> u32 {
         }
     }
 
-    min_cost
+    let mut paths = Vec::new();
+    for state in shortest_paths {
+        let mut path = Vec::new();
+        let mut current_state = state;
+        while let Some(prev_state) = current_state.prev {
+            path.push(current_state.pos);
+            current_state = *prev_state;
+        }
+        path.push(start);
+        path.reverse();
+        paths.push(path);
+    }
+
+    (paths, min_cost)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
-}
 
 enum Tile {
     Wall,
@@ -179,6 +224,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(45));
     }
 }
