@@ -47,7 +47,7 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(out)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<u32> {
     // find all values
     // sum xs and ys to zs
     // find all conflicting values

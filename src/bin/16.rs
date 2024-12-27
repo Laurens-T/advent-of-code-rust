@@ -1,6 +1,6 @@
 use std::cmp::{Ordering, Reverse};
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::ops::Add;
+use advent_of_code::vec2::Vec2;
 advent_of_code::solution!(16);
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -121,7 +121,6 @@ fn shortest_path(grid: &HashMap<Vec2, Tile>, start: Vec2, end: Vec2) -> (Vec<Vec
     (paths, min_cost)
 }
 
-
 enum Tile {
     Wall,
     Open,
@@ -162,17 +161,6 @@ impl Direction {
             Direction::South => Vec2(1, 0),
             Direction::West => Vec2(0, -1),
         }
-    }
-}
-
-#[derive(Eq, PartialEq, Hash, Copy, Clone, Ord, PartialOrd)]
-struct Vec2(i32, i32);
-
-impl Add for Vec2 {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Vec2(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 
