@@ -9,7 +9,7 @@ use nom::{
 
 use std::{
     collections::{BinaryHeap, HashMap},
-    ops
+    ops,
 };
 
 advent_of_code::solution!(13);
@@ -58,24 +58,6 @@ fn solve(machine: &Machine, offset: i64) -> i64 {
         0
     } else {
         a * 3 + b
-    }
-}
-
-fn solve_machine(machine: &Machine, offset: i64) -> i64 {
-    let prize = (machine.prize.0 + offset, machine.prize.1 + offset);
-    let det = machine.a.0 * machine.b.1 - machine.a.1 * machine.b.0;
-
-    let a = (prize.0 * machine.b.1 - prize.1 * machine.b.0) / det;
-    let b = (machine.a.0 * prize.1 - machine.a.1 * prize.0) / det;
-
-    if (
-        machine.a.0 * a + machine.b.0 * b,
-        machine.a.1 * a + machine.b.1 * b,
-    ) == (prize.0, prize.1)
-    {
-        a * COST_A + COST_B
-    } else {
-        0
     }
 }
 
