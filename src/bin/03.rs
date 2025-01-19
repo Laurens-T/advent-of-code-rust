@@ -79,26 +79,16 @@ impl Parser {
             }
         }
 
-        let first = match self.maybe_parse_num() {
-            Some(val) => val,
-            None => return None,
-        };
-
+        let first = self.maybe_parse_num()?;
         match self.curr_byte() {
-            Some(&c) if c == ',' => self.pos += 1,
-            Some(_) => return None,
-            None => return None,
+            Some(&',') => { self.pos += 1 },
+            _ => return None,
         }
 
-        let second = match self.maybe_parse_num() {
-            Some(val) => val,
-            None => return None,
-        };
-
+        let second = self.maybe_parse_num()?;
         match self.curr_byte() {
-            Some(&c) if c == ')' => self.pos += 1,
-            Some(_) => return None,
-            None => return None,
+            Some(&')') => self.pos += 1,
+            _ => return None,
         }
 
         Some(Instruction::Multiplication { first, second })
@@ -110,7 +100,7 @@ impl Parser {
 
         while let Some(&b) = self.curr_byte() {
             if b.is_ascii_digit() {
-                result = 10 * result + (b as u8 - '0' as u8) as i32;
+                result = 10 * result + (b as u8 - b'0') as i32;
                 self.pos += 1;
             } else {
                 break;
